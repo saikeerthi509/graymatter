@@ -1,0 +1,76 @@
+--used two tables and analyzed basic functions--
+select * from HumanResources.Department as h2
+
+create view view_Hrdept as (select Name from HumanResources.Department)
+select * from view_Hrdept
+
+select *  from HumanResources.EmployeeDepartmentHistory as h1
+
+select * from h1.DepartmentID,h1.ShiftID,h1.BusinessID,h2.Name,h2.GroupName
+
+from  h1
+inner join  h2
+on h1.DepartmentID=h2.DepartmentID
+
+
+
+
+select * from Person.PhoneNumberType
+insert into Person.PhoneNumberType (Name)values('cell')
+
+--created new schema in my own database--
+create database keerthi
+
+create schema gme
+
+create table gme.users (id int,user_name varchar(255),transactions int)
+alter table gme.users
+add age int
+select * from gme.users
+insert into  gme.users values(1,'keerthi',01,15)
+insert into  gme.users values(2,'sai',02,18)
+insert into  gme.users values(3,'ganesh',02,20)
+
+--added some constraints to table i have created--
+
+alter table gme.users
+add constraint cc_users1_age
+check (age>=11)
+
+insert into  gme.users values(3,'ganesh',02,11)
+insert into  gme.users values(3,'ganesh',02,10)
+
+delete from gme.users where user_name ='ganesh'
+
+--used view --
+
+create view vw_user as (select id,user_name from gme.users)
+select * from vw_user
+
+
+--created temporary table--
+
+create   table #temp_table
+(username varchar(255))
+
+insert into #temp_table values('kee')
+
+select * from #temp_table
+
+create table permanent
+(username varchar(255))
+
+insert into permanent values('arun')
+
+select * from permanent
+
+--using temporary table--
+
+insert into #temp_table
+select * from permanent
+-- cte--
+with gme_cte as
+(select * from permanent)
+select * from gme_cte
+
+
