@@ -1,0 +1,199 @@
+
+select * from sales.Customer
+--creating auditlog table
+create table AuditLog(
+logid int  identity(1,1) primary key,
+inserteddate datetime,
+updateddate datetime,
+deleteddate datetime,
+insertedby nvarchar(100),
+updatedby nvarchar(100),
+deletedby nvarchar(100)
+);
+go
+--- create trigger using after insert
+create trigger trg_afterinsertt
+on Sales.Customer
+After insert
+as
+begin
+insert into AuditLog(inserteddate,insertedby)
+values(getdate(),SUSER_SNAME());
+end;
+go
+
+insert into Sales.Customer(PersonID) values (1)
+
+select * from AuditLog
+
+create trigger trg_afterupdate
+on Sales.Customer
+After update
+as
+begin
+insert into dbo.AuditLog(updateddate,updatedby)
+values(getdate(),SUSER_SNAME());
+end;
+
+update  Sales.Customer set  personid=1 where StoreID=934
+go
+
+create trigger trg_afterdelete
+on Sales.Customer
+After delete
+as
+begin
+insert into dbo.AuditLog(deleteddate,deletedby)
+values(getdate(),SUSER_SNAME());
+end;
+go
+
+delete from Sales.Customer where CustomerID=1
+
+create trigger trg_insteadofinsert
+on Sales.Customer
+instead of insert
+as
+begin
+insert into AuditLog(inserteddate,insertedby)
+values
+(getdate(),SUSER_SNAME())
+
+end
+go
+
+
+create trigger trg_insteadofupdate
+on Sales.Customer
+instead of update
+as
+begin
+insert into AuditLog(updateddate,updatedby)
+values
+(getdate(),SUSER_SNAME())
+
+end
+go
+
+select * from Production.ProductCostHistory
+
+---create  a scalar function
+
+create function calculateprice (@price decimal(10,2),@quantity int)
+returns decimal (10,2)
+as
+begin
+declare @actualprice decimal(10,2);
+set @actualprice=@price * @quantity;
+return @actualprice;
+end;
+select ProductID,StandardCost,dbo.calculateprice(StandardCost,2) as actualprice 
+from
+Production.ProductCostHistory;
+
+--create a table function
+
+create function getcustomer (@productid int)
+returns table
+as
+return (
+select ProductID,StandardCost
+from Production.ProductCostHistory
+where ProductID=@productid
+);
+
+select *
+from dbo.getcustomer(707)
+
+--transaction and commit
+---start a transaction
+begin transaction
+---variables for warehouse ids and quantity to transfer
+declare @fromwarehouseid int =1;
+declare @towarehouseid int =2;
+declare @ProductID int=1;
+declare @qtt int=10;
+
+--- perform the inventory transfer
+update Production.ProductInventory
+set Quantity=Quantity-@qtt
+where ProductID =@ProductID and LocationID=@fromwarehouseid;
+
+insert into Production.ProductInventory(ProductID,LocationID,Shelf,Bin,Quantity)
+values (@ProductID,@towarehouseid,'a','1',@qtt);
+
+--commit the transaction if everything is successful
+commit transaction
+print 'inventory transfer successfully completed';
+
+select * from Sales.SalesOrderHeader
+
+
+declare @totalamt decimal(10,2);
+declare @SalesOrderID int;
+
+create table #temp(
+SalesOrderID int ,OrderDate date,TotalDue int)
+
+create table dbo.salesorderchangelog
+(
+changeid int identity(1,1) PRIMARY KEY,
+salesorderid int,
+oldtotaldue money,
+newtotaldue money,
+changedate datetime
+);
+
+ 
+
+create trigger trg_afterupdatedd
+on Sales.SalesOrderHeader
+After update
+as
+begin
+
+insert into salesorderchangelog (salesorderid,oldtotaldue,newtotaldue,changedate)
+select i.salesorderid,d.TaxAmt,i.TaxAmt,getdate() from inserted i INNER JOIN  deleted d on i.SalesOrderID=d.SalesOrderID;
+end;
+
+
+
+with ctesales as( 
+select s2.@CustomerID,sum(s2.SubTotal) as  total
+from Sales.SalesOrderHeader s2
+join  Sales.Customer s1 on s2.CustomerID=s1.@CustomerID
+group by s2.@CustomerID
+
+)
+select @totalamt = total from ctesales
+print @totalamt
+
+insert into #temp
+select 
+SalesOrderID,
+OrderDate,
+TotalDue
+from 
+Sales.SalesOrderHeader
+where
+SalesOrderID=43659
+
+
+
+select * from #temp
+
+update #temp set TotalDue=23 where SalesOrderID=43659
+
+GO
+exec salesprocedure @CustomerID=29825
+
+
+
+
+
+
+
+
+
+
+
