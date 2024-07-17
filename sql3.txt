@@ -1,0 +1,191 @@
+
+--sdc type 1
+
+create table sdc_table1 ( 
+
+id int ,
+name varchar(100),
+location varchar(100),
+
+);
+
+insert into sdc_table1 values(1,'keerthi','bglr')
+insert into sdc_table1 values(2,'sai','bglr')
+insert into sdc_table1 values(3,'sree','bglr')
+insert into sdc_table1 values(4,'kgh','bglr')
+
+select * from sdc_table1
+
+update sdc_table1
+set name='shiv'
+where id=2;
+
+--sdc type2
+
+create table sdc_table2 ( 
+
+id int identity(1,1),
+cstid int,
+name varchar(100),
+location varchar(100),
+
+startdate datetime,
+enddate datetime
+);
+
+
+insert into sdc_table2 values(1,'keerthi','bglr',getdate(),null)
+insert into sdc_table2 values(2,'sai','bglr',getdate(),null)
+insert into sdc_table2 values(3,'sree','bglr',getdate(),null)
+insert into sdc_table2 values(4,'kgh','bglr',getdate(),null)
+
+select * from sdc_table2
+
+insert into sdc_table2 (cstid,name,location,startdate,enddate)
+values (1,'keerthi','chennai',getdate(),null)
+--update old records
+update sdc_table2
+set enddate=getdate()
+where id=1 and enddate is null
+
+create table sdc_table3 (id int ,
+name varchar(100),
+location varchar(100),
+prevname varchar(100)
+
+);
+
+--sdc type 3
+
+insert into sdc_table3 values(1,'keerthi','bglr')
+insert into sdc_table3 values(2,'sai','bglr')
+insert into sdc_table3 values(3,'sree','bglr')
+insert into sdc_table3 values(4,'kgh','bglr')
+
+
+--cdc functioning
+
+select * from sdc_table2
+EXEC sys.sp_cdc_enable_db
+
+EXEC sys.sp_cdc_enable_table
+@source_schema=N'dbo',
+@source_name=N'sdc_table2',
+@role_name=NULL
+
+
+
+create table sdc_table2 ( 
+
+id int identity(1,1),
+cstid int,
+name varchar(100),
+location varchar(100),
+
+startdate datetime,
+enddate datetime
+);
+
+
+insert into sdc_table2 values(1,'keerthi','bglr',getdate(),null)
+insert into sdc_table2 values(2,'sai','bglr',getdate(),null)
+insert into sdc_table2 values(3,'sree','bglr',getdate(),null)
+insert into sdc_table2 values(4,'kgh','bglr',getdate(),null)
+
+select * from sdc_table2
+
+EXEC sys.sp_cdc_enable_db
+
+EXEC sys.sp_cdc_enable_table
+@source_schema=N'dbo',
+@source_name=N'sdc_table2',
+@role_name=NULL
+
+select * from cdc.dbo_sdc_table2_CT;
+
+insert into sdc_table2 values(5,'khgh','bglr',getdate(),null)
+
+insert into sdc_table2 values(6,'khgho','bglr',getdate(),null)
+insert into sdc_table2 values(7,'khghoojg','bglr',getdate(),null)
+insert into sdc_table2 values(8,'khghkk','bglr',getdate(),null)
+
+
+
+delete  from sdc_table2 where cstid=5
+
+
+select * from Sales.SalesOrderHeader
+
+select SalesOrderID,cast(OrderDate as date) from Sales.SalesOrderHeader
+
+--extracting domain name from mail
+
+select * from Person.EmailAddress
+
+select
+substring(EmailAddress,charindex('@',EmailAddress)+1,len(EmailAddress)-charindex('@',EmailAddress)) as domain
+from
+Person.EmailAddress
+
+--creating function to check domain
+
+create function returndomain(@email nvarchar(255))
+returns nvarchar(255)
+as
+begin
+return substring(@email,charindex('@',@email)+1,len(@email)-charindex('@',@email))
+end;
+select dbo.returndomain('saikee@gmail.com') as domain
+
+
+
+
+
+--working of merge
+
+create table customer ( 
+cstid int,
+name varchar(100),
+location varchar(100),
+);
+
+
+insert into customer values(1,'keerthi','bglr')
+insert into customer values(2,'sai','chennai')
+insert into customer values(3,'sree','hyd')
+insert into  customer values(4,'kgh','kerala')
+
+select * from customer
+
+create table #tempcust (
+cstid int,
+name varchar(100),
+location varchar(100),
+);
+insert into #tempcust values(1,'keerthi','bglr')
+insert into  #tempcust values(2,'sai','bengal')
+insert into #tempcust  values(3,'sree','hyd')
+insert into   #tempcust values(4,'akshay','kerala')
+
+select * from #tempcust
+
+select * from customer
+
+
+MERGE customer as target
+using #tempcust as source
+on(target.cstid=source.cstid)
+when matched and (target.name<>source.name or target.location<>source.location)
+Then update set target.location=source.location
+when not matched by target
+Then insert (cstid,name,location)
+values (source.cstid,source.name,source.location);
+
+
+
+
+
+
+
+
+
