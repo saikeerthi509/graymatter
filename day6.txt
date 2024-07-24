@@ -1,0 +1,465 @@
+Introduction to SQL
+1. Write a query to retrieve the first 10 records from the Person.Person table.
+2. Write a query to retrieve all columns from the Production.Product table where the Color is 
+'Red'.
+
+select top 10 *
+from Person.Person 
+
+select * from Production.Product
+
+select * from Production.Product
+where color='Red'
+
+Advanced SQL Queries
+1. Create a query to list the ProductID and the average ListPrice from the Production.Product 
+table, grouped by ProductID.
+2. Create a query to list the DepartmentID and the number of employees in each department 
+from the HumanResources.EmployeeDepartmentHistory table, grouped by DepartmentID.
+
+select * from Production.Product
+
+select ProductID,avg(ListPrice) as averageprice
+from  Production.Product
+group by ProductID
+
+select  DepartmentID,count(DepartmentID) as numofemployees
+from HumanResources.EmployeeDepartmentHistory
+group by DepartmentID
+
+SQL for Data Engineering
+1. Write a query to join the Sales.SalesOrderHeader and Sales.SalesOrderDetail tables to get a 
+list of sales order numbers and their respective product IDs.
+2. Write a query to join the Sales.Customer and Person.Person tables to get a list of customer 
+names and their email addresses.
+
+select * from Sales.SalesOrderHeader
+select * from Sales.SalesOrderDetail
+
+select t1.SalesOrderNumber,t2.ProductID
+from Sales.SalesOrderHeader as t1
+inner join  Sales.SalesOrderDetail as t2
+on t1.SalesOrderID=t2.SalesOrderID
+
+
+select * from Person.Person
+select * from Person.EmailAddress
+
+select t1.FirstName,t1.MiddleName,t1.LastName,t2.EmailAddress
+from Person.Person as t1
+inner join Person.EmailAddress as t2
+on t1.BusinessEntityID=t2.BusinessEntityID
+
+Writing Queries for Data Manipulation and Analysis
+1. Create a query to update the PhoneNumber in the Person.PersonPhone table where 
+BusinessEntityID is 5.
+2. Write a query to delete records from the Sales.ShoppingCartItem table where the Quantity is 
+1.
+
+select * from Person.PersonPhone
+
+update Person.PersonPhone
+set PhoneNumber='9876543211'
+where BusinessEntityID=5
+
+select * from Sales.ShoppingCartItem
+
+delete from Sales.ShoppingCartItem
+where Quantity=3
+
+Working with Indexes and Views
+1. Create an index on the SalesOrderNumber column in the Sales.SalesOrderHeader table.
+2. Drop an existing index named IX_Product_Name on the Production.Product table.
+
+select * from Sales.SalesOrderHeader
+
+create INDEX index_sales
+on Sales.SalesOrderHeader (SalesOrderNumber);
+
+drop INDEX IX_Product_Name
+on Production.Product;
+
+Creating and Using Indexes and Views
+1. Create a view that shows the ProductID, Name, and ProductNumber from the 
+Production.Product table.
+2. Create a view that joins the Sales.SalesOrderHeader and Sales.SalesOrderDetail tables and 
+includes columns for SalesOrderID, OrderDate, and TotalDue.
+
+create view view_production as (select ProductID,Name,ProductNumber from Production.Product)
+select * from view_production
+
+
+select * from Sales.SalesOrderHeader
+select * from Sales.SalesOrderDetail
+create view view_join as ( 
+select t2.SalesOrderID,t1.OrderDate,t1.TotalDue 
+from Sales.SalesOrderHeader as t1
+inner join Sales.SalesOrderDetail as t2
+on t1.SalesOrderID=t2.SalesOrderID)
+
+select * from view_join
+
+TE TABLE production.product_price_history
+(Transactions and Concurrency Control
+1. Write a transaction to transfer $500 from account A to account B ensuring ACID properties.
+2. Write a transaction to insert a new record into the Sales.SpecialOffer table and update the 
+ModifiedDate in the Production.Product table, ensuring both operations are atomic.
+3. Explain what happens when two transactions try to update the same record simultaneously 
+and how SQL Server handles it.
+
+imagining a table Person.Finance
+
+BEGIN TRANSACTION;
+
+DECLARE @AccountA INT = 1; -- Replace with the actual AccountA ID
+DECLARE @AccountB INT = 2; -- Replace with the actual AccountB ID
+DECLARE @Amount DECIMAL(19, 4) = 500.00;
+
+-- Check if AccountA has sufficient funds
+IF EXISTS (
+    SELECT 1
+    FROM Person.Finance
+    WHERE AccountID = @AccountA AND Balance >= @Amount
+)
+BEGIN
+    -- Deduct the amount from AccountA
+    UPDATE Person.Finance
+    SET Balance = Balance - @Amount
+    WHERE AccountID = @AccountA;
+
+    -- Add the amount to AccountB
+    UPDATE Person.Finance
+    SET Balance = Balance + @Amount
+    WHERE AccountID = @AccountB;
+
+    
+    COMMIT TRANSACTION;
+    PRINT 'Transaction succeeded: $500 has been transferred from AccountA to AccountB.';
+END
+ELSE
+BEGIN
+    
+    ROLLBACK TRANSACTION;
+    PRINT 'Transaction failed: Insufficient funds in AccountA.';
+END
+
+
+select * from Sales.SpecialOffer
+select * from Production.Product
+
+BEGIN TRANSACTION;
+
+DECLARE @SpecialOfferID INT;
+DECLARE @CurrentDate DATETIME = GETDATE();
+
+-- Insert a new record into Sales.SpecialOffer
+INSERT INTO Sales.SpecialOffer (
+    Description,
+    DiscountPct,
+    Type,
+    Category,
+    StartDate,
+    EndDate,
+    MinQty,
+    MaxQty,
+    ModifiedDate
+)
+VALUES (
+    'New Year Sale',         
+    0.15,                    
+    'Discount',             
+    'Holiday',               
+    '2024-01-01',            
+    '2024-01-31',            
+    1,                      
+    NULL,                    
+    @CurrentDate
+);
+
+
+SET @SpecialOfferID = SCOPE_IDENTITY();
+
+
+UPDATE Production.Product
+SET ModifiedDate = @CurrentDate
+WHERE ProductID = 1;         
+
+
+IF @@ERROR = 0
+BEGIN
+    COMMIT TRANSACTION;
+    PRINT 'Transaction succeeded: SpecialOffer inserted and Product ModifiedDate updated.';
+END
+ELSE
+BEGIN
+    ROLLBACK TRANSACTION;
+    PRINT 'Transaction failed: Changes have been rolled back.';
+END
+
+when two transactions try to update the same record simultaneously   this is against the 
+ACID properties 
+Transaction T1 Starts
+Transaction T2 Starts
+Transaction T1 commits
+Transaction T2 continues
+
+
+Stored Procedures
+1. Create a stored procedure to insert a new product into the Sales.Currency table.
+2. Create a stored procedure to update the StandardCost of a product in the Production.Product 
+table based on the ProductID and a new cost parameter.
+
+select * from Sales.Currency
+create procedure  proc_sales
+@CurrencyCode varchar(255),
+@Name varchar(255),
+@ModifiedDate datetime
+as
+begin
+insert into Sales.Currency values (@CurrencyCode,@Name,@ModifiedDate)
+end
+
+exec proc_sales @CurrencyCode='ABC',@Name='keerthi',@ModifiedDate='2011-03-13 00:00:00'
+
+2. Create a stored procedure to update the StandardCost of a product in the Production.Product 
+table based on the ProductID and a new cost parameter.
+
+select * from Production.Product
+
+create procedure proc_updatecost
+@newcost money,
+@id int
+as
+begin
+update  Production.Product 
+set  StandardCost=@newcost
+where ProductID=@id
+end
+
+exec proc_updatecost @newcost='500',@id='1'
+
+Writing Triggers
+1. Write a trigger that updates the ModifiedDate column in the Production.Product table 
+whenever a record is updated.
+2. Write a trigger to log changes to the ListPrice in the Production.Product table into a new table 
+called ProductPriceHistory.
+
+CREATE TRIGGER trg_Update
+ON Production.Product
+AFTER UPDATE
+AS
+BEGIN
+    
+    UPDATE Production.Product
+    SET ModifiedDate = GETDATE()
+    FROM Production.Product p
+    inner join inserted i ON p.ProductID = i.ProductID;
+
+	UPDATE Production.Product
+	END;
+
+SET Name = 'Updated Product Name'
+WHERE ProductID = 1;
+
+
+
+CREA
+    history_id INT IDENTITY(1,1) PRIMARY KEY,
+    product_id INT,
+    old_list_price DECIMAL(18, 2),
+    new_list_price DECIMAL(18, 2),
+    change_date DATETIME DEFAULT GETDATE(),
+    changed_by NVARCHAR(128)
+);
+
+CREATE TRIGGER trg_log_price_change
+ON production.product
+AFTER UPDATE
+AS
+BEGIN
+
+    INSERT INTO production.product_price_history (product_id, old_list_price, new_list_price, change_date, changed_by)
+    SELECT 
+        i.product_id,
+        d.list_price AS old_list_price,
+        i.list_price AS new_list_price,
+        GETDATE() AS change_date,
+        SYSTEM_USER AS changed_by
+    FROM 
+        inserted i
+    INNER JOIN 
+        deleted d ON i.product_id = d.product_id
+    WHERE 
+        i.list_price <> d.list_price; 
+END;
+
+UPDATE production.product
+SET list_price = 149.99
+WHERE product_id = 1;
+
+Slowly Changing Dimensions (SCD) and Change Data Capture (CDC)
+1. Describe a scenario in the Adventure Works database where a Slowly Changing Dimension 
+(SCD) Type 2 would be appropriate.
+
+In  AdventureWorks scenario, SCD Type 2 is used to track historical changes in 
+employee job titles and roles. This approach allows the company to maintain accurate records 
+of job title changes over time, providing valuable insights into employee career development 
+and organizational changes.
+
+ETL (Extract, Transform, Load)
+1. Outline the steps to extract data from the Sales.SalesOrderHeader table, transform it to 
+aggregate sales by year, and load it into a new table called YearlySales.
+
+Step 1: Create the YearlySales Table
+CREATE TABLE Sales.YearlySales
+(
+    Year INT PRIMARY KEY,
+    TotalSales DECIMAL(18, 2)
+);
+
+Step 2: Extract and Aggregate Data
+SELECT 
+    YEAR(OrderDate) AS Year,
+    SUM(TotalDue) AS TotalSales
+FROM 
+    Sales.SalesOrderHeader
+GROUP BY 
+    YEAR(OrderDate);
+
+Step 3: Insert Aggregated Data into YearlySales
+INSERT INTO Sales.YearlySales (Year, TotalSales)
+SELECT 
+    YEAR(OrderDate) AS Year,
+    SUM(TotalDue) AS TotalSales
+FROM 
+    Sales.SalesOrderHeader
+GROUP BY 
+    YEAR(OrderDate);
+
+select * from Sales.YearlySales
+
+
+2. Describe the ETL process and its importance in data warehousing, using examples from the 
+Adventure Works database.
+
+CREATE TABLE Sales.MonthlySalesSummary
+(
+    Year INT,
+    Month INT,
+    TotalSales DECIMAL(18, 2),
+    PRIMARY KEY (Year, Month)
+);
+
+SELECT
+    YEAR(OrderDate) AS Year,
+    MONTH(OrderDate) AS Month,
+    SUM(TotalDue) AS TotalSales
+FROM
+    Sales.SalesOrderHeader
+GROUP BY
+    YEAR(OrderDate),
+    MONTH(OrderDate);
+
+
+INSERT INTO Sales.MonthlySalesSummary (Year, Month, TotalSales)
+SELECT
+    YEAR(OrderDate) AS Year,
+    MONTH(OrderDate) AS Month,
+    SUM(TotalDue) AS TotalSales
+FROM
+    Sales.SalesOrderHeader
+GROUP BY
+    YEAR(OrderDate),
+    MONTH(OrderDate);
+
+select * from Sales.MonthlySalesSummary
+
+
+
+
+3. Write a SQL script to extract data from the Sales.Customer table, transform it to calculate the 
+TotalSpend for each customer, and load it into a new table called CustomerSpend.
+
+Creates the CustomerSpend table to store the total spending of each customer.
+Extracts and transforms data from the Sales.Customer and Sales.SalesOrderHeader tables to 
+calculate the total spending for each customer.
+Loads the aggregated total spend data into the CustomerSpend table for further analysis and 
+reporting.
+
+
+
+4. Write a query to extract data from the Production.Product table, transform it by adding a 10% 
+markup to the ListPrice, and insert it into a new table called ProductWithMarkup
+
+CREATE TABLE Production.ProductWithMarkup
+(
+    ProductID INT PRIMARY KEY,
+    Name NVARCHAR(255),
+    ListPrice DECIMAL(18, 2),
+    MarkupPrice DECIMAL(18, 2)
+);
+
+INSERT INTO Production.ProductWithMarkup (ProductID, Name, ListPrice, MarkupPrice)
+SELECT
+    ProductID,
+    Name,
+    ListPrice,
+    ListPrice * 1.10 AS MarkupPrice
+FROM
+    Production.Product;
+
+select TOP 50 * 
+from Production.ProductWithMarkup
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
