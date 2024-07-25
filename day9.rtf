@@ -1,0 +1,310 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Times New Roman;}{\f1\fnil\fcharset2 Times New Roman;}{\f2\fnil\fcharset161 Times New Roman;}{\f3\fnil\fcharset161 Calibri;}{\f4\fnil\fcharset2 Wingdings;}{\f5\fnil\fcharset0 Calibri;}}
+{\colortbl ;\red255\green0\blue0;\red0\green0\blue255;}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\cf1\f0\fs32\lang9 12. Decorators:\par
+\f1\'b7\f0  Create a decorator that logs the execution time of a function. Apply it to a function that sorts a large list.\par
+\cf0\par
+import time\par
+import functools\par
+\par
+def log_execution_time(func):\par
+    @functools.wraps(func)\par
+    def wrapper(*args, **kwargs):\par
+        start_time = time.time()\par
+        result = func(*args, **kwargs)\par
+        end_time = time.time()\par
+        execution_time = end_time - start_time\par
+        print(f"Function '\{func.__name__\}' executed in \{execution_time:.4f\} seconds")\par
+        return result\par
+    return wrapper\par
+\par
+import random\par
+\par
+@log_execution_time\par
+def sort_large_list(size):\par
+    large_list = [random.randint(0, 10000) for _ in range(size)]\par
+    sorted_list = sorted(large_list)\par
+    return sorted_list\par
+\par
+# Test the decorator\par
+sorted_list = sort_large_list(100000)  # Sorting a list with 100,000 elements\par
+print(sorted_list)\par
+\par
+\cf1\f1\'b7\f0  Create a decorator that retries a function up to 3 times if it raises an exception, with a delay between retries\cf0\par
+\par
+import time\par
+import functools\par
+\par
+def retry(max_retries=3, delay=1):\par
+    def decorator(func):\par
+        @functools.wraps(func)\par
+        def wrapper(*args, **kwargs):\par
+            attempts = 0\par
+            while attempts < max_retries:\par
+                try:\par
+                    return func(*args, **kwargs)\par
+                except Exception as e:\par
+                    attempts += 1\par
+                    print(f"Attempt \{attempts\} failed: \{e\}. Retrying in \{delay\} seconds...")\par
+                    time.sleep(delay)\par
+            # If all retries fail, raise the last exception\par
+            raise Exception(f"Function '\{func.__name__\}' failed after \{max_retries\} retries.")\par
+        return wrapper\par
+    return decorator\par
+\par
+import random\par
+\par
+@retry(max_retries=3, delay=2)\par
+def might_fail_function():\par
+    if random.choice([True, False]):\par
+        raise ValueError("Simulated failure!")\par
+    return "Success!"\par
+\par
+# Test the decorator\par
+try:\par
+    result = might_fail_function()\par
+    print(result)\par
+except Exception as e:\par
+    print(e)\par
+\cf1 13. Concurrency with Threads:\par
+\f1\'b7\f0  Write a program that uses threading to calculate the sum of a large list of numbers by dividing the work among multiple threads.\par
+\cf0\par
+import threading\par
+\par
+# Function to calculate the sum of a portion of the list\par
+def partial_sum(numbers, start, end, result, index):\par
+    result[index] = sum(numbers[start:end])\par
+\par
+def calculate_sum(numbers, num_threads):\par
+    length = len(numbers)\par
+    thread_list = []\par
+    result = [0] * num_threads  # Shared result list to store partial sums\par
+\par
+    # Calculate the range of indices each thread will handle\par
+    chunk_size = length // num_threads\par
+\par
+    for i in range(num_threads):\par
+        start = i * chunk_size\par
+        end = None if i == num_threads - 1 else (i + 1) * chunk_size\par
+        thread = threading.Thread(target=partial_sum, args=(numbers, start, end, result, i))\par
+        thread_list.append(thread)\par
+        thread.start()\par
+\par
+    # Wait for all threads to complete\par
+    for thread in thread_list:\par
+        thread.join()\par
+\par
+    # Return the sum of all partial results\par
+    return sum(result)\par
+\par
+# Example usage\par
+if __name__ == "__main__":\par
+    large_list = list(range(1, 1000001))  # List of 1 million numbers\par
+    num_threads = 4\par
+    total_sum = calculate_sum(large_list, num_threads)\par
+    print(f"Total Sum: \{total_sum\}")\par
+\par
+\cf1\par
+\f1\'b7\f0  Write a program that uses threading to fetch data from multiple URLs concurrently and print the status code of each response.\par
+\cf0\par
+import threading\par
+import requests\par
+\par
+# Function to fetch the status code of a URL\par
+def fetch_status_code(url):\par
+    try:\par
+        response = requests.get(url)\par
+        print(f"URL: \{url\} - Status Code: \{response.status_code\}")\par
+    except requests.RequestException as e:\par
+        print(f"URL: \{url\} - Failed to fetch: \{e\}")\par
+\par
+def fetch_urls_concurrently(urls, num_threads):\par
+    thread_list = []\par
+\par
+    # Create and start threads for each URL\par
+    for i in range(num_threads):\par
+        start_index = i * (len(urls) // num_threads)\par
+        end_index = None if i == num_threads - 1 else (i + 1) * (len(urls) // num_threads)\par
+        for url in urls[start_index:end_index]:\par
+            thread = threading.Thread(target=fetch_status_code, args=(url,))\par
+            thread_list.append(thread)\par
+            thread.start()\par
+\par
+    # Wait for all threads to complete\par
+    for thread in thread_list:\par
+        thread.join()\par
+\par
+# Example usage\par
+if __name__ == "__main__":\par
+    urls = [\par
+        '{{\field{\*\fldinst{HYPERLINK https://www.example.com }}{\fldrslt{https://www.example.com\ul0\cf0}}}}\f0\fs32 ',\par
+        '{{\field{\*\fldinst{HYPERLINK https://www.google.com }}{\fldrslt{https://www.google.com\ul0\cf0}}}}\f0\fs32 ',\par
+        '{{\field{\*\fldinst{HYPERLINK https://www.python.org }}{\fldrslt{https://www.python.org\ul0\cf0}}}}\f0\fs32 ',\par
+        '{{\field{\*\fldinst{HYPERLINK https://www.github.com }}{\fldrslt{https://www.github.com\ul0\cf0}}}}\f0\fs32 '\par
+    ]\par
+    num_threads = 4\par
+    fetch_urls_concurrently(urls, num_threads)\par
+\par
+\cf1 20. Memory Management:\par
+\f1\'b7\f0  Write a program to monitor memory usage of a Python script and log it to the console at regular intervals.\par
+\cf0\par
+import psutil\par
+import time\par
+import os\par
+\par
+def log_memory_usage(interval=1):\par
+    process = psutil.Process(os.getpid())\par
+    while True:\par
+        mem_info = process.memory_info()\par
+        print(f"Memory Usage: \{mem_info.rss / (1024 * 1024):.2f\} MB")  # Print memory usage in MB\par
+        time.sleep(interval)\par
+\par
+if __name__ == "__main__":\par
+    log_memory_usage(5)  # Log memory usage every 5 seconds\par
+\par
+\cf1\f1\'b7\f0  Write a function that generates a large list of random numbers and uses memory pro\lang1033 f\f2\lang1032 iling to identify any memory leaks.\cf0\par
+\par
+from memory_profiler import profile\par
+import random\par
+\par
+@profile\par
+def generate_large_list(size):\par
+    large_list = [random.randint(0, 10000) for _ in range(size)]\par
+    return large_list\par
+\par
+if __name__ == "__main__":\par
+    generate_large_list(10**6)  # Generate a list with 1 million random numbers\par
+\f3\fs22\lang9\par
+\cf1\f0\fs32 18. Regular Expressions:\par
+\f4\'b7\f0  Write a function that validates email addresses using regular expressions.\par
+\cf0\par
+import re\cf1\par
+\cf0\par
+def validate_email(email):\par
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]\{2,\}$'\par
+    if re.match(email_pattern, email):\par
+        return True\par
+    else:\par
+        return False\par
+\par
+# Example usage\par
+print(validate_email('example@example.com'))  # Output: True\par
+print(validate_email('invalid-email'))         # Output: False\par
+\cf1\par
+\f4\'b7\f0  Write a function that extracts all the dates from a given text string in the format (DD-MM-YYYY).\par
+\cf0\par
+import re\par
+\par
+def extract_dates(text):\par
+    date_pattern = r'\\b\\d\{2\}-\\d\{2\}-\\d\{4\}\\b'\par
+    return re.findall(date_pattern, text)\par
+\par
+# Example usage\par
+text = "The deadlines are 01-01-2023, 15-03-2023, and 31-12-2023."\par
+dates = extract_dates(text)\par
+print("Extracted dates:", dates)  # Output: ['01-01-2023', '15-03-2023', '31-12-2023']\par
+\cf1\par
+21. Parallel Processing:\par
+\f4\'b7\f0  Use the multiprocessing module to parallelize a CPU-bound task, such as calculating the prime numbers in a given range.\par
+\cf0\par
+import multiprocessing\par
+\par
+def is_prime(n):\par
+    if n <= 1:\par
+        return False\par
+    if n <= 3:\par
+        return True\par
+    if n % 2 == 0 or n % 3 == 0:\par
+        return False\par
+    i = 5\par
+    while i * i <= n:\par
+        if n % i == 0 or n % (i + 2) == 0:\par
+            return False\par
+        i += 6\par
+    return True\par
+\par
+def find_primes_in_range(start, end):\par
+    return [n for n in range(start, end) if is_prime(n)]\par
+\par
+def parallel_prime_finder(start, end, num_processes):\par
+    pool = multiprocessing.Pool(processes=num_processes)\par
+    range_size = (end - start) // num_processes\par
+    ranges = [(start + i * range_size, start + (i + 1) * range_size) for i in range(num_processes)]\par
+    \par
+    result = pool.starmap(find_primes_in_range, ranges)\par
+    pool.close()\par
+    pool.join()\par
+    \par
+    primes = [prime for sublist in result for prime in sublist]\par
+    return primes\par
+\par
+if __name__ == "__main__":\par
+    start_range = 1\par
+    end_range = 100000\par
+    num_processes = 4\par
+\par
+    primes = parallel_prime_finder(start_range, end_range, num_processes)\par
+    print(f"Number of primes found: \{len(primes)\}")\par
+\par
+\cf1 #to run\par
+python parallel_primes.py\par
+\cf0\par
+\cf1\f4\'b7\f0  Write a program that uses the multiprocessing module to perform matrix multiplication in parallel.\cf0\par
+\par
+import numpy as np\par
+import multiprocessing\par
+\par
+def matrix_multiply_worker(a, b, result, row, col):\par
+    result[row][col] = np.dot(a[row, :], b[:, col])\par
+\par
+def parallel_matrix_multiplication(a, b, num_processes):\par
+    a_rows, a_cols = a.shape\par
+    b_rows, b_cols = b.shape\par
+\par
+    if a_cols != b_rows:\par
+        raise ValueError("Number of A columns must equal number of B rows")\par
+\par
+    result = np.zeros((a_rows, b_cols))\par
+\par
+    processes = []\par
+    for row in range(a_rows):\par
+        for col in range(b_cols):\par
+            p = multiprocessing.Process(target=matrix_multiply_worker, args=(a, b, result, row, col))\par
+            processes.append(p)\par
+            p.start()\par
+\par
+            if len(processes) >= num_processes:\par
+                for p in processes:\par
+                    p.join()\par
+                processes = []\par
+\par
+    for p in processes:\par
+        p.join()\par
+\par
+    return result\par
+\par
+if __name__ == "__main__":\par
+    np.random.seed(0)\par
+    a = np.random.rand(4, 4)\par
+    b = np.random.rand(4, 4)\par
+    num_processes = 4\par
+\par
+    result = parallel_matrix_multiplication(a, b, num_processes)\par
+    print("Matrix A:")\par
+    print(a)\par
+    print("Matrix B:")\par
+    print(b)\par
+    print("Resultant Matrix C (A x B):")\par
+    print(result)\par
+\par
+\par
+\cf1 #to run\par
+python parallel_matrix_multiplication.py\par
+
+\pard\ri-732\sa200\sl276\slmult1\par
+
+\pard\sa200\sl276\slmult1\cf0\f5\fs22\par
+\par
+\par
+}
+ 
