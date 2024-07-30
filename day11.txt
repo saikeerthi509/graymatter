@@ -1,0 +1,50 @@
+class Employee:
+    def __init__(self, name, salary, start_year):
+        self.name = name
+        self.salary = salary
+        self.start_year = start_year
+
+    def get_salary(self):
+        return self.salary
+
+    def get_experience(self, current_year):
+        return current_year - self.start_year
+
+
+employee1 = Employee("John Doe", 60000, 2015)
+employee2 = Employee("Jane Smith", 75000, 2010)
+
+print(employee1.get_salary())
+print(employee1.name)
+
+import pandas as pd
+data={'name':['sai','keerthi','sree'],'salary':[50000,60000,650000],'experience':[3,4,5]}
+df=pd.DataFrame(data)
+print(df)
+
+class emp:
+    
+        
+    
+    def salary(df,name):
+    
+
+        salary = df.loc[df['name'] == name, 'salary'].values[0]
+        return salary
+    
+    
+    def increment(df,name):
+        years = df.loc[df['name'] == name, 'experience'].values[0]
+        if years>4:
+            return 'there is increment'
+        else:
+            return 'no increment'
+            
+print(emp.salary(df,'sree'))
+print(emp.increment(df,'sai'))
+
+QGVTVEF1FDZQOQCEYF
+
+theory on azure cloud models, services,benifits
+created storage units
+created virtual machine
